@@ -1,6 +1,7 @@
 //! Provides a wrapper for sinks, to test blocking and errors.
 
 use futures::{Sink, StartSend, Poll, task, AsyncSink, Async, Stream};
+use quickcheck::{empty_shrinker, Arbitrary, Gen};
 
 /// What to do the next time `start_send` is called.
 #[derive(Clone, Debug, PartialEq)]
@@ -16,6 +17,19 @@ pub enum SendOp<E> {
     Err(E),
 }
 
+impl<E> Arbitrary for SendOp<E>
+    where E: 'static + Send + Clone
+{
+    /// Generates 75% Delegate, 25% NotReady.
+    fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        if g.next_f32() < 0.25 {
+            SendOp::NotReady
+        } else {
+            SendOp::Delegate
+        }
+    }
+}
+
 /// What to do the next time `poll_complete` is called.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FlushOp<E> {
@@ -28,6 +42,19 @@ pub enum FlushOp<E> {
 
     /// Return an error instead of calling into the underlying operation.
     Err(E),
+}
+
+impl<E> Arbitrary for FlushOp<E>
+    where E: 'static + Send + Clone
+{
+    /// Generates 75% Delegate, 25% NotReady.
+    fn arbitrary<G: Gen>(g: &mut G) -> Self {
+        if g.next_f32() < 0.25 {
+            FlushOp::NotReady
+        } else {
+            FlushOp::Delegate
+        }
+    }
 }
 
 /// A Sink wrapper that modifies operations of the inner Sink according to the
