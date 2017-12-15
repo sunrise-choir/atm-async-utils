@@ -5,3 +5,4 @@ extern crate futures;
 extern crate quickcheck;
 
 pub mod test_sink;
+pub mod test_channel;
