@@ -1,7 +1,7 @@
 //! Provides a wrapper for sinks, to test blocking and errors.
 
 use futures::{Sink, StartSend, Poll, task, AsyncSink, Async, Stream};
-use quickcheck::{empty_shrinker, Arbitrary, Gen};
+use quickcheck::{Arbitrary, Gen};
 
 /// What to do the next time `start_send` is called.
 #[derive(Clone, Debug, PartialEq)]
@@ -120,7 +120,7 @@ impl<S: Sink> Sink for TestSink<S> {
     fn start_send(&mut self, item: Self::SinkItem) -> StartSend<Self::SinkItem, Self::SinkError> {
         match self.send_ops.next() {
             Some(SendOp::NotReady) => {
-                task::park().unpark();
+                task::current().notify();
                 Ok(AsyncSink::NotReady(item))
             }
             Some(SendOp::Err(err)) => Err(err),
@@ -132,7 +132,7 @@ impl<S: Sink> Sink for TestSink<S> {
     fn poll_complete(&mut self) -> Poll<(), Self::SinkError> {
         match self.flush_ops.next() {
             Some(FlushOp::NotReady) => {
-                task::park().unpark();
+                task::current().notify();
                 Ok(Async::NotReady)
             }
             Some(FlushOp::Err(err)) => Err(err),
