@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn test_success() {
         let rng = StdGen::new(rand::thread_rng(), 100);
-        let mut quickcheck = QuickCheck::new().gen(rng).tests(10000); // TODO breaks sometimes... FIXME
+        let mut quickcheck = QuickCheck::new().gen(rng).tests(10000);
         quickcheck.quickcheck(success as fn(usize, Vec<u8>) -> bool);
     }
 

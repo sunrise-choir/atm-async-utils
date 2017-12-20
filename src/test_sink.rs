@@ -18,7 +18,7 @@ pub enum SendOp<E> {
 }
 
 impl<E> Arbitrary for SendOp<E>
-    where E: 'static + Send + Clone
+    where E: Arbitrary
 {
     /// Generates 75% Delegate, 25% NotReady.
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
@@ -45,7 +45,7 @@ pub enum FlushOp<E> {
 }
 
 impl<E> Arbitrary for FlushOp<E>
-    where E: 'static + Send + Clone
+    where E: Arbitrary
 {
     /// Generates 75% Delegate, 25% NotReady.
     fn arbitrary<G: Gen>(g: &mut G) -> Self {
