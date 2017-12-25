@@ -121,18 +121,18 @@ impl<I, SE, E> Stream for Receiver<I, SE, E> {
     fn poll(&mut self) -> Poll<Option<Self::Item>, Self::Error> {
         let mut c = self.0.borrow_mut();
 
-        if c.end_of_stream {
-            return Ok(Async::Ready(None));
-        }
-
-        let e = c.error.take();
-        if e.is_some() {
-            c.unpark();
-            return Err(e.unwrap());
-        }
-
         match c.data.pop_front() {
             None => {
+                if c.end_of_stream {
+                    return Ok(Async::Ready(None));
+                }
+
+                let e = c.error.take();
+                if e.is_some() {
+                    c.unpark();
+                    return Err(e.unwrap());
+                }
+
                 c.task = Some(current());
                 return Ok(Async::NotReady);
             }
@@ -177,14 +177,9 @@ mod tests {
         let (sender, receiver) = test_channel::<u8, Void, Void>(buf_size + 1);
         let s = sender.send_all(iter_ok(data));
 
-        let mut counter = 0;
-        let r = receiver.for_each(|item| {
-                                      assert_eq!(item, data_copy[counter]);
-                                      counter += 1;
-                                      Ok(())
-                                  });
+        let r = receiver.collect();
+        let (received, _) = r.join(s).wait().unwrap();
 
-        let (_, _) = r.join(s).wait().unwrap();
-        true
+        return received == data_copy;
     }
 }
