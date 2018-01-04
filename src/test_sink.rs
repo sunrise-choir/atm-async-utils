@@ -58,7 +58,7 @@ impl<E> Arbitrary for FlushOp<E>
 }
 
 /// A Sink wrapper that modifies operations of the inner Sink according to the
-/// provided iterator.
+/// provided iterators.
 pub struct TestSink<S: Sink> {
     inner: S,
     send_ops: Box<Iterator<Item = SendOp<S::SinkError>> + Send>,
@@ -117,6 +117,7 @@ impl<S: Sink> TestSink<S> {
 impl<S: Sink> Sink for TestSink<S> {
     type SinkItem = S::SinkItem;
     type SinkError = S::SinkError;
+
     fn start_send(&mut self, item: Self::SinkItem) -> StartSend<Self::SinkItem, Self::SinkError> {
         match self.send_ops.next() {
             Some(SendOp::NotReady) => {

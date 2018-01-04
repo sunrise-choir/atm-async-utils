@@ -11,5 +11,6 @@ extern crate void;
 extern crate rand;
 
 pub mod test_sink;
+pub mod test_stream;
 pub mod test_channel;
 pub mod sink_futures;
