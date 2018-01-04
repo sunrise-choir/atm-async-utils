@@ -39,7 +39,7 @@ pub struct TestStream<S: Stream> {
 
 impl<S: Stream> TestStream<S> {
     /// Creates a new `TestStream` wrapper over the Samtre with the specified `PollOps`s.
-    pub fn new<I, J>(inner: S, poll_iter: I) -> Self
+    pub fn new<I>(inner: S, poll_iter: I) -> Self
         where I: IntoIterator<Item = PollOp<S::Error>> + 'static,
               I::IntoIter: Send
     {
