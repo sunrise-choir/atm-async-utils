@@ -1,7 +1,8 @@
 //! Futures for working with Sinks.
 
-use futures::{Sink, Poll, AsyncSink, Async, Future, Stream};
-use futures::stream::Fuse;
+use futures::{Sink, Poll, Async, Future, Stream};
+use futures::future::AndThen;
+use futures::sink::Send;
 
 /// Future which closes a sink.
 pub struct Close<S: Sink> {
@@ -55,90 +56,21 @@ impl<S: Sink> Future for Close<S> {
     }
 }
 
-// FIXME does not resolve after end of stream has been reached
-// /// Future which sends all items from a Stream into a Sink. Unlike the tokio SendAll Future, this
-// /// does not close the sink (it does flush though).
-// pub struct SendAll<T, U: Stream> {
-//     sink: Option<T>,
-//     stream: Option<Fuse<U>>,
-//     buffered: Option<U::Item>,
-// }
-//
-// impl<T, U> SendAll<T, U>
-//     where T: Sink,
-//           U: Stream<Item = T::SinkItem>,
-//           T::SinkError: From<U::Error>
-// {
-//     /// Create a new SendAll Future. Unlike the tokio SendAll Future, this does not close the sink
-//     /// (it does flush though).
-//     pub fn new(sink: T, stream: U) -> SendAll<T, U> {
-//         SendAll {
-//             sink: Some(sink),
-//             stream: Some(stream.fuse()),
-//             buffered: None,
-//         }
-//     }
-//
-//     fn sink_mut(&mut self) -> &mut T {
-//         self.sink
-//             .as_mut()
-//             .take()
-//             .expect("Attempted to poll SendAll after completion")
-//     }
-//
-//     fn stream_mut(&mut self) -> &mut Fuse<U> {
-//         self.stream
-//             .as_mut()
-//             .take()
-//             .expect("Attempted to poll SendAll after completion")
-//     }
-//
-//     fn take_result(&mut self) -> (T, U) {
-//         let sink = self.sink
-//             .take()
-//             .expect("Attempted to poll SendAll after completion");
-//         let fuse = self.stream
-//             .take()
-//             .expect("Attempted to poll SendAll after completion");
-//         (sink, fuse.into_inner())
-//     }
-//
-//     fn try_start_send(&mut self, item: U::Item) -> Poll<(), T::SinkError> {
-//         debug_assert!(self.buffered.is_none());
-//         if let AsyncSink::NotReady(item) = self.sink_mut().start_send(item)? {
-//             self.buffered = Some(item);
-//             return Ok(Async::NotReady);
-//         }
-//         Ok(Async::Ready(()))
-//     }
-// }
-//
-// impl<T, U> Future for SendAll<T, U>
-//     where T: Sink,
-//           U: Stream<Item = T::SinkItem>,
-//           T::SinkError: From<U::Error>
-// {
-//     type Item = (T, U);
-//     type Error = T::SinkError;
-//
-//     fn poll(&mut self) -> Poll<(T, U), T::SinkError> {
-//         // If we've got an item buffered already, we need to write it to the
-//         // sink before we can do anything else
-//         if let Some(item) = self.buffered.take() {
-//             try_ready!(self.try_start_send(item))
-//         }
-//
-//         loop {
-//             match self.stream_mut().poll()? {
-//                 Async::Ready(Some(item)) => try_ready!(self.try_start_send(item)),
-//                 Async::Ready(None) => {
-//                     return Ok(Async::Ready(self.take_result()));
-//                 }
-//                 Async::NotReady => {
-//                     try_ready!(self.sink_mut().poll_complete());
-//                     return Ok(Async::NotReady);
-//                 }
-//             }
-//         }
-//     }
-// }
+/// Future which sends a value down a sink and then closes it.
+pub struct SendClose<S: Sink>(AndThen<Send<S>, Close<S>, fn(S) -> Close<S>>);
+
+impl<S: Sink> SendClose<S> {
+    /// Create a new `SendClose` future that sends the given `Item`.
+    pub fn new(sink: S, item: S::SinkItem) -> SendClose<S> {
+        SendClose(sink.send(item).and_then(|ps_sink| Close::new(ps_sink)))
+    }
+}
+
+impl<S: Sink> Future for SendClose<S> {
+    type Item = S;
+    type Error = S::SinkError;
+
+    fn poll(&mut self) -> Poll<S, S::SinkError> {
+        self.0.poll()
+    }
+}
