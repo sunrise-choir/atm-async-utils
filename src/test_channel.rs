@@ -88,4 +88,33 @@ impl<I, E> Stream for TestReceiver<I, E> {
     }
 }
 
-// TODO make sure TestSender and TestReceiver are thread-safe
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use futures::{SinkExt, StreamExt, FutureExt};
+    use futures::sink::close;
+    use futures::stream::iter_ok;
+    use futures::executor::block_on;
+
+    #[test]
+    fn it_works() {
+        let (sender, receiver) = test_channel(2);
+
+        let send_stuff = sender
+            .send_all(iter_ok::<_, Never>(vec![Ok(0), Ok(1), Err(0), Ok(2), Err(1)]))
+            .and_then(|(sender, _)| close(sender).map(|_| ()));
+
+        let receive_stuff = receiver
+            .then(|result| match result {
+                      Ok(foo) => Ok(Ok(foo)),
+                      Err(err) => Ok(Err(err)),
+                  })
+            .collect()
+            .map(|results| {
+                     assert_eq!(results, vec![Ok(0), Ok(1), Err(0), Ok(2), Err(1)]);
+                 });
+
+        assert!(block_on(receive_stuff.join(send_stuff)).is_ok());
+    }
+}

@@ -6,4 +6,7 @@ extern crate futures_sink;
 extern crate futures_channel;
 extern crate quickcheck;
 
+#[cfg(test)]
+extern crate futures;
+
 pub mod test_channel;

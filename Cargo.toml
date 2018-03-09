@@ -11,4 +11,7 @@ repository = "https://github.com/AljoschaMeyer/atm-async-utils"
 futures-core = "0.2.0-alpha"
 futures-sink = "0.2.0-alpha"
 futures-channel = "0.2.0-alpha"
-quickcheck = "0.6.1"
+quickcheck = "0.6.1" # TODO use this
+
+[dev-dependencies]
+futures = "0.2.0-alpha"
