@@ -1,6 +1,6 @@
 [package]
 name = "atm-async-utils"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["AljoschaMeyer <mail@aljoscha-meyer.de>"]
 description = "Utilities for implementing and testing futures::Sink and futures::Stream related code."
 readme = "README.md"
