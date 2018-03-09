@@ -4,8 +4,6 @@
 extern crate futures_core;
 extern crate futures_sink;
 extern crate futures_channel;
-extern crate quickcheck;
-
 #[cfg(test)]
 extern crate futures;
 
