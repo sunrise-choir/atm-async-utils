@@ -4,7 +4,11 @@
 extern crate futures_core;
 extern crate futures_sink;
 extern crate futures_channel;
+extern crate futures_util;
 #[cfg(test)]
 extern crate futures;
 
 pub mod test_channel;
+mod send_close;
+
+pub use send_close::*;
