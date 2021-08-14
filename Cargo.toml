@@ -4,8 +4,8 @@ version = "0.2.1"
 authors = ["AljoschaMeyer <mail@aljoscha-meyer.de>"]
 description = "Utilities for implementing and testing futures::Sink and futures::Stream related code."
 readme = "README.md"
-license = "AGPL-3.0"
-repository = "https://github.com/AljoschaMeyer/atm-async-utils"
+license = "LGPL-3.0"
+repository = "https://github.com/sunrise-choir/atm-async-utils"
 
 [dependencies]
 futures-core = "0.2.0-alpha"
